@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { getStatistics, getVehicles, getVehiclesByStatus } from "./api";
-import {getLabelClass, dateUtil, triggerDataFetch} from './UtilsFunction'
+import { getLabelClass, dateUtil } from "./UtilsFunction";
 import VehicleStatusModal from "./VehicleStatusModal";
 import FleetStatistics from "./FleetStatistics";
 import Header from "./Header";
@@ -12,13 +12,7 @@ function App() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState(null);
   const [filterStatus, setFilterStatus] = useState("all");
-  const [statusCounts, setStatusCounts] = useState({
-    all: 0,
-    idle: 0,
-    "en_route": 0,
-    delivered: 0,
-  });
-  const [status, setStatus] = useState('Connecting...');
+  const [status, setStatus] = useState("Connecting...");
   const [socket, setSocket] = useState(null);
   const vehicleHeader = [
     "Vehicle",
@@ -30,36 +24,77 @@ function App() {
     "Last Update",
     "Location",
   ];
+  const triggerDataFetch = (activeSocket) => {
+    if (activeSocket && activeSocket.readyState === WebSocket.OPEN) {
+      console.log("Fetching fresh data via WebSocket...");
+
+      activeSocket.onmessage = (event) => {
+        try {
+          const parsed = JSON.parse(event.data);
+          const incomingArray = Array.isArray(parsed)
+            ? parsed
+            : parsed.data || [parsed];
+
+          // Overwrite existing vehicles by ID instead of blindly stacking duplicates
+          setVehicles((prev) => {
+            const vehicleMap = new Map(prev.map((v) => [v.id, v]));
+            incomingArray.forEach((v) => {
+              if (v && v.id) vehicleMap.set(v.id, v);
+            });
+            return Array.from(vehicleMap.values());
+          });
+        } catch (error) {
+          console.error("Error parsing triggerDataFetch payload:", error);
+        }
+      };
+
+      activeSocket.send(JSON.stringify({}));
+    }
+  };
 
   useEffect(() => {
-    const myWebsocket = new WebSocket('wss://case-study-26cf.onrender.com');
+    const myWebsocket = new WebSocket("wss://case-study-26cf.onrender.com");
     let fetchTimer = null;
-        // 2. Connection opened
+    // 2. Connection opened
     myWebsocket.onopen = () => {
-      setStatus('Connected');
+      setStatus("Connected");
       setSocket(myWebsocket);
       fetchTimer = setInterval(() => {
         triggerDataFetch(myWebsocket);
-      }, 180000); 
+      }, 180000);
     };
 
-    // 3. Listen for incoming messages
+
     myWebsocket.onmessage = (event) => {
-      console.log('Received:', event.data);
-        setVehicles((prev) => [...prev, 
-      JSON.parse(event.data)]);
-  
+      try {
+        console.log("Received raw:", event.data);
+        const parsed = JSON.parse(event.data);
+        const incomingArray = Array.isArray(parsed)
+          ? parsed
+          : parsed.data || [parsed];
+
+        // Merges stream data elegantly by replacing matching IDs
+        setVehicles((prev) => {
+          const vehicleMap = new Map(prev.map((v) => [v.id, v]));
+          incomingArray.forEach((v) => {
+            if (v && v.id) vehicleMap.set(v.id, v);
+          });
+          return Array.from(vehicleMap.values());
+        });
+      } catch (error) {
+        console.error("Error parsing stream WebSocket data:", err);
+      }
     };
 
     // 4. Handle errors
     myWebsocket.onerror = (error) => {
-      console.error('WebSocket Error:', error);
-      setStatus('Error connecting');
+      console.error("WebSocket Error:", error);
+      setStatus("Error connecting");
     };
 
     // 5. Connection closed
     myWebsocket.onclose = () => {
-      setStatus('Disconnected');
+      setStatus("Disconnected");
       setSocket(null);
     };
     fetch("https://case-study-26cf.onrender.com/api/vehicles")
@@ -68,15 +103,6 @@ function App() {
         const vehiclesData = data.data;
         console.log(vehiclesData);
         setVehicles([...vehiclesData]);
-        let statusCountTotal={
-          all: vehiclesData.length,
-          idle: vehiclesData.filter((v) => v.status === "idle").length,
-          "en_route": vehiclesData.filter((v) => v.status === "en_route").length,
-          delivered: vehiclesData.filter((v) => v.status === "delivered").length,
-        };
-        console.log("Status Counts:", statusCountTotal);
-        setStatusCounts({...statusCountTotal
-        });
       })
       .catch((error) => {
         console.error("Error fetching data:", error);
@@ -92,18 +118,21 @@ function App() {
       .catch((error) => {
         console.error("Error fetching statistics:", error);
       });
-      return () => {
-        if (myWebsocket) {
-          myWebsocket.close();
-        }
-        if (fetchTimer) {
-          clearTimeout(fetchTimer);
-        }
+    return () => {
+      if (myWebsocket) {
+        myWebsocket.close();
       }
+      if (fetchTimer) {
+        clearInterval(fetchTimer);
+      }
+    };
   }, []);
   useEffect(() => {
-    const url = filterStatus === "all" ? "https://case-study-26cf.onrender.com/api/vehicles" : `https://case-study-26cf.onrender.com/api/vehicles/status/${filterStatus}`;
-      fetch(url)
+    const url =
+      filterStatus === "all"
+        ? "https://case-study-26cf.onrender.com/api/vehicles"
+        : `https://case-study-26cf.onrender.com/api/vehicles/status/${filterStatus}`;
+    fetch(url)
       .then((response) => response.json())
       .then((data) => {
         setVehicles([...data.data]);
@@ -113,42 +142,64 @@ function App() {
       });
   }, [filterStatus]);
 
-
   return (
-    <><Header />
+    <>
+      <Header />
       <div className="grid-container">
         <div className="sidebar">
           <div className="heading">Filter By Status</div>
 
           <div className="dashboard-grid">
-
-            <div className={filterStatus === "all" ? "metric-card active" : "metric-card"} onClick={() => setFilterStatus("all")}>
+            <div
+              className={
+                filterStatus === "all" ? "metric-card active" : "metric-card"
+              }
+              onClick={() => setFilterStatus("all")}
+            >
               <div className="metric-label">
                 <div className="circular-dot"></div>
-                <span>All ( {statusCounts.all} )</span>
+                <span>All ( {vehicles.length} )</span>
               </div>
             </div>
-            <div className={filterStatus === "idle" ? "metric-card active" : "metric-card"} onClick={() => setFilterStatus("idle")}>
+            <div
+              className={
+                filterStatus === "idle" ? "metric-card active" : "metric-card"
+              }
+              onClick={() => setFilterStatus("idle")}
+            >
               <div className="metric-label">
                 <div className="circular-dot"></div>
-                <span>Idle ( {statusCounts.idle} )</span>
+                <span>Idle ( {vehicles.filter((v) => v.status === "idle").length} )</span>
               </div>
             </div>
-            <div className={filterStatus === "en_route" ? "metric-card active" : "metric-card"} onClick={() => setFilterStatus("en_route")}>
+            <div
+              className={
+                filterStatus === "en_route"
+                  ? "metric-card active"
+                  : "metric-card"
+              }
+              onClick={() => setFilterStatus("en_route")}
+            >
               <div className="metric-label">
                 <div className="circular-dot cyan"></div>
-                <span>En Route ( {statusCounts["en_route"]} )</span>
+                <span>En Route ( {vehicles.filter((v) => v.status === "en_route").length} )</span>
               </div>
             </div>
-            <div className={filterStatus === "delivered" ? "metric-card active" : "metric-card"} onClick={() => setFilterStatus("delivered")}>
+            <div
+              className={
+                filterStatus === "delivered"
+                  ? "metric-card active"
+                  : "metric-card"
+              }
+              onClick={() => setFilterStatus("delivered")}
+            >
               <div className="metric-label">
                 <div className="circular-dot green"></div>
-                <span>Delivered ( {statusCounts.delivered} ) </span>
+                <span>Delivered ( {vehicles.filter((v) => v.status === "delivered").length} ) </span>
               </div>
             </div>
           </div>
           <FleetStatistics statistics={statistics} />
-
         </div>
         <div className="table-container">
           <div className="table-row-header">
@@ -163,17 +214,31 @@ function App() {
                   className="col-sm"
                   onClick={() => {
                     setIsModalOpen(!isModalOpen);
-                    setSelectedVehicle(vehicle);
+                    setSelectedVehicle(vehicle.id);
                   }}
                 >
                   {vehicle.vehicleNumber}
                 </div>
                 <div className="col-lr">{vehicle.driverName}</div>
-                <div className={getLabelClass(vehicle.status)}>{vehicle.status}</div>
-                <div className="col-sm"> {vehicle.speed==0 ? `${vehicle.speed}` :`${vehicle.speed} mph`}</div>
+                <div className={getLabelClass(vehicle.status)}>
+                  {vehicle.status}
+                </div><div>
+                <div className="col-sm gray label-pill">
+                  {" "}
+                  {vehicle.speed == 0
+                    ? `${vehicle.speed}`
+                    : `${vehicle.speed} mph`}
+                </div>
+                </div>
                 <div className="col-lr">{vehicle.destination}</div>
-                <div className="col-m">{dateUtil(vehicle.estimatedArrival).toLocaleDateString()}, {dateUtil(vehicle.estimatedArrival).toLocaleTimeString()}</div>
-                <div>{dateUtil(vehicle.lastUpdated).toLocaleDateString()}, {dateUtil(vehicle.lastUpdated).toLocaleTimeString()}</div>
+                <div className="col-m">
+                  {dateUtil(vehicle.estimatedArrival).toLocaleDateString()},{" "}
+                  {dateUtil(vehicle.estimatedArrival).toLocaleTimeString()}
+                </div>
+                <div>
+                  {dateUtil(vehicle.lastUpdated).toLocaleDateString()},{" "}
+                  {dateUtil(vehicle.lastUpdated).toLocaleTimeString()}
+                </div>
                 <div className="col-lr">
                   {vehicle.currentLocation?.lat?.toFixed(5)} ,{" "}
                   {vehicle.currentLocation?.lng?.toFixed(5)}
@@ -188,7 +253,6 @@ function App() {
           />
         )}
       </div>
-
     </>
   );
 }

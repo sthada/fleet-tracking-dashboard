@@ -8,6 +8,16 @@ export function getLabelClass(status) {
         return "col-sm gray label-pill";
     }
   }
+  export function getProgressClass(num) {
+    switch (true) {
+      case (num<=20):
+        return "progress-bar danger";
+      case (num<=40):
+        return "progress-bar warning";
+      default:
+        return "progress-bar green";
+    }
+  }
 
   export function dateUtil (dateString){
 
@@ -15,18 +25,3 @@ export function getLabelClass(status) {
   }
 
   
-export const triggerDataFetch = (activeSocket) => {
-    
-      if (activeSocket && activeSocket.readyState === WebSocket.OPEN) {
-        console.log('Fetching fresh data via WebSocket...');
-        activeSocket.onmessage = (event) => {
-          setVehicles((prev) => [...prev, 
-        JSON.parse(event.data)]);
-    
-      };
-        
-        // Customize this payload string/object to match what your backend expects
-        // const requestPayload = JSON.stringify({ action: 'fetchData' }); 
-        activeSocket.send(JSON.stringify({}));
-      }
-    };

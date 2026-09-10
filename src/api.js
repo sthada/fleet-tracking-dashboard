@@ -21,18 +21,11 @@ export function getStatistics() {
         });
     }
 
-    function getVehicleById(id) {
-      return fetch(`https://case-study-26cf.onrender.com/api/vehicles/${id}`)
-        .then(response => response.json())
-        .then(data => {
-          console.log(data);
-          return data;
-        })
-        .catch(error => {
-          console.error(`Error fetching vehicle with ID ${id}:`, error);
-          throw error;
-        });
-    }
+    export async function getVehicleById(id) {
+      return fetch(`https://case-study-26cf.onrender.com/api/vehicles/${id}`);
+    
+      }
+    
 
 export function getVehiclesByStatus(status) {
       return fetch(`https://case-study-26cf.onrender.com/api/vehicles/status/${status}`)

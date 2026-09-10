@@ -131,5 +131,6 @@
 }
 
 .progress-bar.danger { background-color: #ef4444; } /* Red for 20% battery */
-.progress-bar.warning { background-color: #d97706; } /* Orange for 44% fuel */
+.progress-bar.warning { background-color: #d97706; } /* Orange for 40% fuel */
+.progress-bar.green { background-color: green; } /* green for >40% fuel */
 

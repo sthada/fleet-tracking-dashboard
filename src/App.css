@@ -48,7 +48,7 @@
 }
  .label-pill 
   {
-    max-width: fit-content; 
+    min-width: fit-content; 
   font-size: 10px;
   font-weight: 500;
   padding-left: 4px;
