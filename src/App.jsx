@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
 import { getStatistics, getVehicles, getVehiclesByStatus } from "./api";
+import {getLabelClass, dateUtil, triggerDataFetch} from './UtilsFunction'
 import VehicleStatusModal from "./VehicleStatusModal";
+import FleetStatistics from "./FleetStatistics";
+import Header from "./Header";
 import "./App.css";
 
 function App() {
@@ -27,21 +30,6 @@ function App() {
     "Last Update",
     "Location",
   ];
- const triggerDataFetch = (activeSocket) => {
-  
-    if (activeSocket && activeSocket.readyState === WebSocket.OPEN) {
-      console.log('Fetching fresh data via WebSocket...');
-      activeSocket.onmessage = (event) => {
-        setVehicles((prev) => [...prev, 
-      JSON.parse(event.data)]);
-  
-    };
-      
-      // Customize this payload string/object to match what your backend expects
-      // const requestPayload = JSON.stringify({ action: 'fetchData' }); 
-      activeSocket.send(JSON.stringify({}));
-    }
-  };
 
   useEffect(() => {
     const myWebsocket = new WebSocket('wss://case-study-26cf.onrender.com');
@@ -124,18 +112,10 @@ function App() {
         console.error("Error fetching vehicles by filter:", error);
       });
   }, [filterStatus]);
-function getLabelClass(status) {
-    switch (status) {
-      case "en_route":
-        return "col-sm cyan label-pill";
-      case "delivered":
-        return "col-sm green label-pill";
-      default:
-        return "col-sm gray label-pill";
-    }
-  }
+
+
   return (
-    <>{filterStatus}{JSON.stringify(statusCounts)}
+    <><Header />
       <div className="grid-container">
         <div className="sidebar">
           <div className="heading">Filter By Status</div>
@@ -167,36 +147,8 @@ function getLabelClass(status) {
               </div>
             </div>
           </div>
-          <div className="heading">Fleet Statistics</div>
+          <FleetStatistics statistics={statistics} />
 
-          <div className="dashboard-grid">
-            <div className="metric-card">
-              <div className="metric-value">{statistics.total}</div>
-              <div className="metric-label">
-                <span>TOTAL FLEET</span>
-              </div>
-            </div>
-            <div className="metric-card">
-              <div className="metric-value">{statistics.average_speed}</div>
-              <div className="metric-label">
-                <span>AVG SPEED</span>
-              </div>
-            </div>
-            <div className="metric-card">
-              <div className="metric-value">{statistics.en_route}</div>
-              <div className="metric-label">
-                <span>MOVING</span>
-              </div>
-            </div>
-            <div className="metric-card">
-              <div className="metric-value">
-                {new Date(statistics.timestamp).toLocaleString()}
-              </div>
-              <div className="metric-label">
-                <span>LAST UPDATE</span>
-              </div>
-            </div>
-          </div>
         </div>
         <div className="table-container">
           <div className="table-row-header">
@@ -218,10 +170,10 @@ function getLabelClass(status) {
                 </div>
                 <div className="col-lr">{vehicle.driverName}</div>
                 <div className={getLabelClass(vehicle.status)}>{vehicle.status}</div>
-                <div className="col-sm">{vehicle.speed} mph</div>
+                <div className="col-sm"> {vehicle.speed==0 ? `${vehicle.speed}` :`${vehicle.speed} mph`}</div>
                 <div className="col-lr">{vehicle.destination}</div>
-                <div className="col-m">{vehicle.estimatedArrival}</div>
-                <div>{vehicle.lastUpdated}</div>
+                <div className="col-m">{dateUtil(vehicle.estimatedArrival).toLocaleDateString()}, {dateUtil(vehicle.estimatedArrival).toLocaleTimeString()}</div>
+                <div>{dateUtil(vehicle.lastUpdated).toLocaleDateString()}, {dateUtil(vehicle.lastUpdated).toLocaleTimeString()}</div>
                 <div className="col-lr">
                   {vehicle.currentLocation?.lat?.toFixed(5)} ,{" "}
                   {vehicle.currentLocation?.lng?.toFixed(5)}
