@@ -3,6 +3,7 @@ import { getLabelClass, dateUtil } from "./UtilsFunction";
 import VehicleStatusModal from "./VehicleStatusModal";
 import TableRow from "./TableRow";
 import FleetStatistics from "./FleetStatistics";
+import ClockTrackingUpdate from "./ClockTrackingUpdate";
 import Header from "./Header";
 import "./App.css";
 
@@ -285,14 +286,9 @@ useEffect(() => {
                 d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
               />
             </svg>
-
-            <span className="status-text-bottom">
-              Updated{" "}
-              {Math.floor((Date.now() - lastUpdateTime) / 1000)}s ago{" "}
-              <span class="dot">•</span> Next update in ~
-              {Math.floor((Date.now() - lastUpdateTime) / 60000)}{" "}
-              minutes
-            </span>
+            <span className="status-text-bottom"> 
+                  <ClockTrackingUpdate lastUpdateTime={lastUpdateTime}/>
+            </span> 
           </div>
         </div>
         <div className="content">
