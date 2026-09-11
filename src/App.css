@@ -101,14 +101,20 @@ hr {
  font-size: 18px;
  font-weight: 500;
 }
+
 .table-container {
-  position: top;
-  width: 100%;
-  margin-bottom: 4%;
-  justify-self: right;
-  overflow-y: auto; 
-  background-color: white;
+    align-self: start; 
+    display: flex;
+    width: 100%;
+    flex-direction: column;
+    justify-content: flex-start;
+    margin-bottom: 4%;
+    margin-top:0;
+    justify-self: right;
+    overflow-y: auto;
+    background-color: white;
 }
+
 
 /* Responsive Mobile Layout (Breaks at 768px tablet width) */
 @media (max-width: 768px) {

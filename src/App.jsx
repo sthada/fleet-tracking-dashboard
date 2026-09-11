@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import { getStatistics, getVehicles, getVehiclesByStatus } from "./api";
 import { getLabelClass, dateUtil } from "./UtilsFunction";
 import VehicleStatusModal from "./VehicleStatusModal";
+import TableRow from "./TableRow";
 import FleetStatistics from "./FleetStatistics";
 import Header from "./Header";
 import "./App.css";
@@ -12,6 +12,13 @@ function App() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState(null);
   const [filterStatus, setFilterStatus] = useState("all");
+  const [filterStatusCount, setFilterStatusCount] = useState({
+    all: 0,
+    idle: 0,
+    en_route: 0,
+    delivered: 0,
+  });
+  const [lastUpdateTime, setLastUpdateTime] = useState(Date.now());
   const [status, setStatus] = useState("Connecting...");
   const [socket, setSocket] = useState(null);
   const vehicleHeader = [
@@ -24,6 +31,19 @@ function App() {
     "Last Update",
     "Location",
   ];
+  function updateFilterCount(arr) {
+    // let idleTemp= ;
+    // let en_route= vehicles.filter((v) => v?.status === "en_route").length;
+    // let delivered=vehicles.filter((v) => v?.status === "delivered").length;
+
+    setFilterStatusCount({
+      all: arr.length,
+      idle: arr.filter((v) => v?.status === "idle").length,
+      en_route: arr.filter((v) => v?.status === "en_route").length,
+      delivered: arr.filter((v) => v?.status === "delivered").length,
+    });
+  }
+
   const triggerDataFetch = (activeSocket) => {
     if (activeSocket && activeSocket.readyState === WebSocket.OPEN) {
       console.log("Fetching fresh data via WebSocket...");
@@ -43,6 +63,9 @@ function App() {
             });
             return Array.from(vehicleMap.values());
           });
+          updateFilterCount(incomingArray);
+          const now = Date.now();
+          setLastUpdateTime(now);
         } catch (error) {
           console.error("Error parsing triggerDataFetch payload:", error);
         }
@@ -80,6 +103,7 @@ function App() {
           });
           return Array.from(vehicleMap.values());
         });
+        updateFilterCount(incomingArray);
       } catch (error) {
         console.error("Error parsing stream WebSocket data:", err);
       }
@@ -102,6 +126,7 @@ function App() {
         const vehiclesData = data.data;
         console.log(vehiclesData);
         setVehicles([...vehiclesData]);
+        // updateFilterCount();
       })
       .catch((error) => {
         console.error("Error fetching data:", error);
@@ -110,8 +135,6 @@ function App() {
     fetch("https://case-study-26cf.onrender.com/api/statistics")
       .then((response) => response.json())
       .then((data) => {
-        console.log(data.data);
-
         setStatistics(data.data);
       })
       .catch((error) => {
@@ -135,6 +158,13 @@ function App() {
       .then((response) => response.json())
       .then((data) => {
         setVehicles([...data.data]);
+        const now = Date.now();
+        console.log(
+          "))))))))))))))))))))))))))))))))",
+          now,
+          now.toLocaleTimeString(),
+        );
+        setLastUpdateTime(now);
       })
       .catch((error) => {
         console.error("Error fetching vehicles by filter:", error);
@@ -161,7 +191,7 @@ function App() {
             >
               <div className="metric-label">
                 <div className="circular-dot"></div>
-                <span>All ( {vehicles.length} )</span>
+                <span>All ( {statistics?.total} )</span>
               </div>
             </div>
             <div
@@ -173,7 +203,7 @@ function App() {
               <div className="metric-label">
                 <div className="circular-dot"></div>
                 <span>
-                  Idle ( {vehicles.filter((v) => v.status === "idle").length} )
+                  Idle ( {filterStatusCount.idle} )
                 </span>
               </div>
             </div>
@@ -189,7 +219,7 @@ function App() {
                 <div className="circular-dot cyan"></div>
                 <span>
                   En Route ({" "}
-                  {vehicles.filter((v) => v.status === "en_route").length} )
+                  {filterStatusCount.en_route} )
                 </span>
               </div>
             </div>
@@ -205,85 +235,61 @@ function App() {
                 <div className="circular-dot green"></div>
                 <span>
                   Delivered ({" "}
-                  {vehicles.filter((v) => v.status === "delivered").length}{" "}
+                  {filterStatusCount.delivered}{" "}
                   ){" "}
                 </span>
               </div>
             </div>
           </div>
-          <br/>
+          <br />
           <hr />
-          <br/>
+          <br />
           <FleetStatistics statistics={statistics} />
-          <div className='status-bar'>
-          <svg
-            class="status-icon"
-            xmlns="http://w3.org"
-            fill="none"
-            viewBox="0 0 36 36"
-            stroke="currentColor"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-            />
-          </svg>
+          <div className="status-bar">
+            <svg
+              class="status-icon"
+              xmlns="http://w3.org"
+              fill="none"
+              viewBox="0 0 36 36"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
 
-          <span className="status-text-bottom">
-            Updated 3s ago <span class="dot">•</span> Next update in ~3 minutes
-          </span>
+            <span className="status-text-bottom">
+              Updated{" "}
+              {Math.floor((Date.now() - lastUpdateTime) / 1000)}s ago{" "}
+              <span class="dot">•</span> Next update in ~
+              {Math.floor((Date.now() - lastUpdateTime) / 60000)}{" "}
+              minutes
+            </span>
           </div>
         </div>
-        <div className='content'>
-        <div className='content-header'>
-          <p>Vehicle ({vehicles.length})</p>
-          <div className="label-pill label-green">Live</div>
-        </div>
-        <div className="table-container">
-          <div className="table-row-header">
-            {vehicleHeader.map((key) => (
-              <div>{key}</div>
-            ))}
+        <div className="content">
+          <div className="content-header">
+            <p>Vehicle ({vehicles.length})</p>
+            <div className="label-pill label-green">Live</div>
           </div>
-          {vehicles.length > 0 &&
-            vehicles.map((vehicle, index) => (
-              <div className="table-row" key={vehicle.id}>
-                <div
-                  className="col-sm"
-                  onClick={() => {
-                    setIsModalOpen(!isModalOpen);
-                    setSelectedVehicle(vehicle.id);
-                  }}
-                >
-                  {vehicle.vehicleNumber}
-                </div>
-                <div className="col-lr">{vehicle.driverName}</div>
-                <div className={getLabelClass(vehicle.status)}>
-                  {vehicle.status}
-                </div>
-                <div>
-                  <div className="col-sm gray label-pill">
-                    {vehicle.speed} mph
-                  </div>
-                </div>
-                <div className="col-lr">{vehicle.destination}</div>
-                <div className="col-m">
-                  {dateUtil(vehicle.estimatedArrival).toLocaleDateString()},{" "}
-                  {dateUtil(vehicle.estimatedArrival).toLocaleTimeString()}
-                </div>
-                <div>
-                  {dateUtil(vehicle.lastUpdated).toLocaleDateString()},{" "}
-                  {dateUtil(vehicle.lastUpdated).toLocaleTimeString()}
-                </div>
-                <div className="col-lr">
-                  {vehicle.currentLocation?.lat?.toFixed(5)} ,{" "}
-                  {vehicle.currentLocation?.lng?.toFixed(5)}
-                </div>
-              </div>
-            ))}
-        </div>
+          <div className="table-container">
+            <div className="table-row-header">
+              {vehicleHeader.map((key) => (
+                <div>{key}</div>
+              ))}
+            </div>
+            {vehicles.length > 0 &&
+              vehicles.map((vehicle, index) => (
+                <TableRow
+                  vehicle={vehicle}
+                  setIsModalOpen={setIsModalOpen}
+                  setSelectedVehicle={setSelectedVehicle}
+                />
+              ))}
+          </div>
         </div>
         {isModalOpen && (
           <VehicleStatusModal
@@ -291,7 +297,6 @@ function App() {
             onClose={() => setIsModalOpen(false)}
           />
         )}
-        
       </div>
     </>
   );
