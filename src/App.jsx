@@ -54,7 +54,6 @@ const triggerDataFetch = (activeSocket) => {
     activeSocket &&
     activeSocket.readyState === WebSocket.OPEN
   ) {
-    console.log("Fetching fresh data via WebSocket...");
 
     activeSocket.send(JSON.stringify({}));
   }
@@ -80,7 +79,6 @@ useEffect(() => {
 
   myWebsocket.onmessage = (event) => {
     try {
-      console.log("Received raw:", event.data);
 
       const parsed = JSON.parse(event.data);
 
@@ -119,14 +117,14 @@ useEffect(() => {
       setLastUpdateTime(Date.now());
     } catch (error) {
       console.error(
-        "Error parsing stream WebSocket data:",
+        "Error parsing WebSocket data:",
         error
       );
     }
   };
 
   myWebsocket.onerror = (error) => {
-    console.error("WebSocket Error:", error);
+    console.error("Web Socket Error:", error);
     setStatus("Error connecting");
   };
 

@@ -2,7 +2,6 @@ hr {
   border: 0;
   width: 100%;
   border-bottom: 1.5px solid #cdcdcd;
-  /* box-shadow: 0 0 1px rgb(171, 171, 171); */
 }
 
 .grid-container {
@@ -19,9 +18,7 @@ hr {
   top: 0;
   width:100%;
   flex-direction: column;
-  min-width: 245px; /* Optional: limits the sidebar width */
-  /* height: 100vh;   /* Keeps the sidebar at full screen height */
-  /* overflow-y: auto; Allows the sidebar to scroll internally if its own content is too long */ 
+  min-width: 245px;
   background-color: white;
   
   border-right: 1px solid #b0b0b0;
@@ -41,7 +38,7 @@ hr {
   background-position: 0 0, 3px 3px; 
   
   border: 2px solid #7c8594; 
-  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.25),  0 4px 6px rgba(0, 0, 0, 0.15);      /* Outer lift effect */
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.25),  0 4px 6px rgba(0, 0, 0, 0.15);   
 
   transition: transform 0.1s ease, box-shadow 0.1s ease;
 }
@@ -76,9 +73,9 @@ hr {
 }
 .active {
   border-color: blue;
-  box-shadow: 0 0 2px rgba(0, 0, 255, 1.5); /* Blue glow effect */
-  transform: scale(1.05); /* Slightly enlarges the dot */  
- color: #005cf0; /* Optional: changes text color to blue when active */
+  box-shadow: 0 0 2px rgba(0, 0, 255, 1.5); 
+  transform: scale(1.05);   
+ color: #005cf0; 
 }
 .content{
   width: 100%;
@@ -86,6 +83,9 @@ hr {
   grid-template-areas:
     "content-header"
     "table-container";
+    
+  grid-template-rows: auto 1fr;
+  align-content: start;
 }
 .content-header {
   display: flex;
@@ -116,17 +116,17 @@ hr {
 }
 
 
-/* Responsive Mobile Layout (Breaks at 768px tablet width) */
+
 @media (max-width: 768px) {
   .grid-container {
-    grid-template-columns: 1fr; /* Stacks into a single 100% width column */
+    grid-template-columns: 1fr; 
     height: auto;
   }
   
   .sidebar, .table-container {
     position: static;
     height: auto;
-    overflow-y: visible; /* Disables independent scrolling on mobile */
+    overflow-y: visible;
   }
 }
 .table-row {
@@ -213,17 +213,17 @@ hr {
 /* **********************************************statistics css  */
 .dashboard-grid {
   display: grid;
-  /* Creates a responsive 2-column layout that scales evenly */
+
   grid-template-columns: repeat(2, 1fr); 
   gap: 10px;
-  max-width: 380px; /* Optional constraint to match the image ratio */
+  max-width: 380px;
   padding: 5px;
 }
 
 .metric-card {
   display: flex;
-  width: 80%;
-  max-width: 180px; /* Optional: limits the card width */
+  width: 75%;
+  max-width: 180px; 
   flex-direction: column;
   align-items: center;
   justify-content: center;
@@ -232,14 +232,14 @@ hr {
   /* Borders and Spacing */
   padding: 14px;
   background-color: #ffffff;
-  border: 1px solid #e2e8f0; /* Light gray border matching the image */
-  border-radius: 12px;       /* Soft rounded corners */
+  border: 1px solid #e2e8f0; 
+  border-radius: 12px;       
 }
 
 .metric-value {
   font-size: 16px;
   font-weight: 700;
-  color: #0d1b2a; /* Dark navy color for metrics */
+  color: #0d1b2a;
   margin-bottom: 4px;
 }
 
@@ -249,40 +249,40 @@ hr {
   gap: 6px;
   font-size: 12px;
   font-weight: 500;
-  color: #64748b; /* Muted gray for text labels */
+  color: #64748b; 
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
-/* .. cdd for live update in left-bar */
+
 .live-status-badge {
-  /* Layout & Alignment */
+
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 12px; /* Spaces the icon and the text evenly */
+  gap: 12px;
   
-  /* Dimensions & Padding */
+
   width: 90%;
   margin-top:10px;
   max-width: 380px;
   padding: 12px 20px;
   
-  /* Borders & Background */
+
   background-color: #ffffff;
   border: 1px solid #e0e0e0;
-  border-radius: 12px; /* Gives the container its rounded pill shape */
+  border-radius: 12px; 
   box-sizing: border-box;
 }
 
-/* Wi-Fi Icon Styling */
+
 .status-icon {
-  color: #1b8555; /* The dark green color matching the image */
+  color: #1b8555; 
   font-size: 14px;
 
 }
 
-/* Text Styling */
+
 .status-text {
   color: #1b8555;
   font-family: 'Open Sans', sans-serif;
@@ -290,7 +290,7 @@ hr {
   font-weight: 400;
   letter-spacing: -0.2px;
 }
-/* bottom of left*/
+
 
 .status-text-bottom {
   font-family: 'Open Sans', sans-serif;
@@ -300,36 +300,27 @@ hr {
 }
 
 .status-bar {
-  /* Layout & Alignment */
   background-color: #dcdcdc;
   display: flex;
   align-items: center;
-  gap: 8px; /* Space between icon and text */
-  
-  /* Sizing & Padding */
+  gap: 8px; 
   width: 84%;
   padding: 10px 20px;
   margin: 10px;
-  
-  /* Colors & Typography */
-  background-color: #f8f9fa; /* Light subtle grey background */
-  color: #6c757d; /* Soft dark grey text */
+  background-color: #f8f9fa;
+  color: #6c757d;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   font-size: 12px;
-  
-  /* Borders & Shaping */
-  border-radius: 8px; /* Smooth rounded corners */
+  border-radius: 8px; 
 }
 
-/* Clock Icon Styling */
 .status-icon {
   width: 16px;
   height: 16px;
   color: #6c757d; 
 }
 
-/* Bullet Point Separator Styling */
 .dot {
   margin: 0 4px;
-  color: #adb5bd; /* Slightly lighter grey for the dot */
+  color: #adb5bd;
 }
