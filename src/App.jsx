@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { getLabelClass, dateUtil } from "./UtilsFunction";
 import VehicleStatusModal from "./VehicleStatusModal";
 import TableRow from "./TableRow";
@@ -7,169 +7,196 @@ import Header from "./Header";
 import "./App.css";
 
 function App() {
-  const [vehicles, setVehicles] = useState([]);
-  const [statistics, setStatistics] = useState({});
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedVehicle, setSelectedVehicle] = useState(null);
-  const [filterStatus, setFilterStatus] = useState("all");
-  const [filterStatusCount, setFilterStatusCount] = useState({
-    all: 0,
-    idle: 0,
-    en_route: 0,
-    delivered: 0,
+
+const [vehicles, setVehicles] = useState([]);
+const [statistics, setStatistics] = useState({});
+const [isModalOpen, setIsModalOpen] = useState(false);
+const [selectedVehicle, setSelectedVehicle] = useState(null);
+const [filterStatus, setFilterStatus] = useState("all");
+const [filterStatusCount, setFilterStatusCount] = useState({
+  all: 0,
+  idle: 0,
+  en_route: 0,
+  delivered: 0,
+});
+const [lastUpdateTime, setLastUpdateTime] = useState(Date.now());
+const [status, setStatus] = useState("Connecting...");
+const [socket, setSocket] = useState(null);
+
+const vehicleHeader = [
+  "Vehicle",
+  "Driver",
+  "Status",
+  "Speed",
+  "Destination",
+  "ETA",
+  "Last Update",
+  "Location",
+];
+
+const filterStatusRef = useRef(filterStatus);
+
+useEffect(() => {
+  filterStatusRef.current = filterStatus;
+}, [filterStatus]);
+
+function updateFilterCount(arr) {
+  setFilterStatusCount({
+    all: arr.length,
+    idle: arr.filter((v) => v?.status === "idle").length,
+    en_route: arr.filter((v) => v?.status === "en_route").length,
+    delivered: arr.filter((v) => v?.status === "delivered").length,
   });
-  const [lastUpdateTime, setLastUpdateTime] = useState(Date.now());
-  const [status, setStatus] = useState("Connecting...");
-  const [socket, setSocket] = useState(null);
-  const vehicleHeader = [
-    "Vehicle",
-    "Driver",
-    "Status",
-    "Speed",
-    "Destination",
-    "ETA",
-    "Last Update",
-    "Location",
-  ];
-  function updateFilterCount(arr) {
-    // let idleTemp= ;
-    // let en_route= vehicles.filter((v) => v?.status === "en_route").length;
-    // let delivered=vehicles.filter((v) => v?.status === "delivered").length;
+}
 
-    setFilterStatusCount({
-      all: arr.length,
-      idle: arr.filter((v) => v?.status === "idle").length,
-      en_route: arr.filter((v) => v?.status === "en_route").length,
-      delivered: arr.filter((v) => v?.status === "delivered").length,
-    });
+const triggerDataFetch = (activeSocket) => {
+  if (
+    activeSocket &&
+    activeSocket.readyState === WebSocket.OPEN
+  ) {
+    console.log("Fetching fresh data via WebSocket...");
+
+    activeSocket.send(JSON.stringify({}));
   }
+};
 
-  const triggerDataFetch = (activeSocket) => {
-    if (activeSocket && activeSocket.readyState === WebSocket.OPEN) {
-      console.log("Fetching fresh data via WebSocket...");
+useEffect(() => {
+  const myWebsocket = new WebSocket(
+    "wss://case-study-26cf.onrender.com"
+  );
 
-      activeSocket.onmessage = (event) => {
-        try {
-          const parsed = JSON.parse(event.data);
-          const incomingArray = Array.isArray(parsed)
-            ? parsed
-            : parsed.data || [parsed];
+  let fetchTimer = null;
 
-          // Overwrite existing vehicles by ID instead of blindly stacking duplicates
-          setVehicles((prev) => {
-            const vehicleMap = new Map(prev.map((v) => [v.id, v]));
-            incomingArray.forEach((v) => {
-              if (v && v.id) vehicleMap.set(v.id, v);
-            });
-            return Array.from(vehicleMap.values());
-          });
-          updateFilterCount(incomingArray);
-          const now = Date.now();
-          setLastUpdateTime(now);
-        } catch (error) {
-          console.error("Error parsing triggerDataFetch payload:", error);
+  myWebsocket.onopen = () => {
+    setStatus("Connected");
+    setSocket(myWebsocket);
+
+    triggerDataFetch(myWebsocket);
+
+    fetchTimer = setInterval(() => {
+      triggerDataFetch(myWebsocket);
+    }, 180000);
+  };
+
+  myWebsocket.onmessage = (event) => {
+    try {
+      console.log("Received raw:", event.data);
+
+      const parsed = JSON.parse(event.data);
+
+      const incomingArray = Array.isArray(parsed)
+        ? parsed
+        : parsed.data || [parsed];
+
+      const currentFilter = filterStatusRef.current;
+
+      setVehicles((prev) => {
+        const vehicleMap = new Map(
+          prev.map((v) => [v.id, v])
+        );
+
+        incomingArray.forEach((v) => {
+          if (v && v.id) {
+            vehicleMap.set(v.id, v);
+          }
+        });
+
+        const updatedVehicles = Array.from(
+          vehicleMap.values()
+        );
+
+        updateFilterCount(updatedVehicles);
+
+        if (currentFilter !== "all") {
+          return updatedVehicles.filter(
+            (v) => v?.status === currentFilter
+          );
         }
-      };
 
-      activeSocket.send(JSON.stringify({}));
+        return updatedVehicles;
+      });
+
+      setLastUpdateTime(Date.now());
+    } catch (error) {
+      console.error(
+        "Error parsing stream WebSocket data:",
+        error
+      );
     }
   };
 
-  useEffect(() => {
-    const myWebsocket = new WebSocket("wss://case-study-26cf.onrender.com");
-    let fetchTimer = null;
-    // 2. Connection opened
-    myWebsocket.onopen = () => {
-      setStatus("Connected");
-      setSocket(myWebsocket);
-      fetchTimer = setInterval(() => {
-        triggerDataFetch(myWebsocket);
-      }, 180000);
-    };
+  myWebsocket.onerror = (error) => {
+    console.error("WebSocket Error:", error);
+    setStatus("Error connecting");
+  };
 
-    myWebsocket.onmessage = (event) => {
-      try {
-        console.log("Received raw:", event.data);
-        const parsed = JSON.parse(event.data);
-        const incomingArray = Array.isArray(parsed)
-          ? parsed
-          : parsed.data || [parsed];
+  myWebsocket.onclose = () => {
+    setStatus("Disconnected");
+    setSocket(null);
+  };
 
-        // Merges stream data elegantly by replacing matching IDs
-        setVehicles((prev) => {
-          const vehicleMap = new Map(prev.map((v) => [v.id, v]));
-          incomingArray.forEach((v) => {
-            if (v && v.id) vehicleMap.set(v.id, v);
-          });
-          return Array.from(vehicleMap.values());
-        });
-        updateFilterCount(incomingArray);
-      } catch (error) {
-        console.error("Error parsing stream WebSocket data:", err);
-      }
-    };
+  fetch(
+    "https://case-study-26cf.onrender.com/api/vehicles"
+  )
+    .then((response) => response.json())
+    .then((data) => {
+      const vehicleData = [...data.data];
 
-    // 4. Handle errors
-    myWebsocket.onerror = (error) => {
-      console.error("WebSocket Error:", error);
-      setStatus("Error connecting");
-    };
+      setVehicles(vehicleData);
+      updateFilterCount(vehicleData);
+    })
+    .catch((error) =>
+      console.error(
+        "Error fetching data:",
+        error
+      )
+    );
 
-    // 5. Connection closed
-    myWebsocket.onclose = () => {
-      setStatus("Disconnected");
-      setSocket(null);
-    };
-    fetch("https://case-study-26cf.onrender.com/api/vehicles")
-      .then((response) => response.json())
-      .then((data) => {
-        const vehiclesData = data.data;
-        console.log(vehiclesData);
-        setVehicles([...vehiclesData]);
-        // updateFilterCount();
-      })
-      .catch((error) => {
-        console.error("Error fetching data:", error);
-      });
+  fetch(
+    "https://case-study-26cf.onrender.com/api/statistics"
+  )
+    .then((response) => response.json())
+    .then((data) => setStatistics(data.data))
+    .catch((error) =>
+      console.error(
+        "Error fetching statistics:",
+        error
+      )
+    );
 
-    fetch("https://case-study-26cf.onrender.com/api/statistics")
-      .then((response) => response.json())
-      .then((data) => {
-        setStatistics(data.data);
-      })
-      .catch((error) => {
-        console.error("Error fetching statistics:", error);
-      });
-    return () => {
-      if (myWebsocket) {
-        myWebsocket.close();
-      }
-      if (fetchTimer) {
-        clearInterval(fetchTimer);
-      }
-    };
-  }, []);
-  useEffect(() => {
-    const url =
-      filterStatus === "all"
-        ? "https://case-study-26cf.onrender.com/api/vehicles"
-        : `https://case-study-26cf.onrender.com/api/vehicles/status/${filterStatus}`;
-    fetch(url)
-      .then((response) => response.json())
-      .then((data) => {
-        setVehicles([...data.data]);
-        const now = Date.now();
-        console.log(
-          "))))))))))))))))))))))))))))))))",
-          now,
-          now.toLocaleTimeString(),
-        );
-        setLastUpdateTime(now);
-      })
-      .catch((error) => {
-        console.error("Error fetching vehicles by filter:", error);
-      });
-  }, [filterStatus]);
+  return () => {
+    if (myWebsocket) {
+      myWebsocket.close();
+    }
+
+    if (fetchTimer) {
+      clearInterval(fetchTimer);
+    }
+  };
+}, []);
+
+useEffect(() => {
+  const url =
+    filterStatus === "all"
+      ? "https://case-study-26cf.onrender.com/api/vehicles"
+      : `https://case-study-26cf.onrender.com/api/vehicles/status/${filterStatus}`;
+
+  fetch(url)
+    .then((response) => response.json())
+    .then((data) => {
+      const vehicleData = [...data.data];
+
+      setVehicles(vehicleData);
+      setLastUpdateTime(Date.now());
+    })
+    .catch((error) => {
+      console.error(
+        "Error fetching vehicles by filter:",
+        error
+      );
+    });
+}, [filterStatus]);
+
 
   return (
     <>
