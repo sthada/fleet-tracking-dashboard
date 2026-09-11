@@ -1,19 +1,32 @@
-.grid-container {
-  display: inline-flex;
-  grid-template-columns: 2fr, 8fr;
-  gap: 10px;                      /* Spacing between the columns */
+hr {
+  border: 0;
   width: 100%;
+  border-bottom: 1.5px solid #cdcdcd;
+  /* box-shadow: 0 0 1px rgb(171, 171, 171); */
+}
+
+.grid-container {
+  display: grid;
+  grid-template-areas:
+    "sidebar content";
+    grid-template-columns: 2fr 8fr;
   height: 100vh;
+  border-top: 1.5px solid #cdcdcd;
 }
 
 .sidebar {
   position: sticky;
   top: 0;
-  width:24%;
+  width:100%;
+  flex-direction: column;
   min-width: 245px; /* Optional: limits the sidebar width */
   /* height: 100vh;   /* Keeps the sidebar at full screen height */
   /* overflow-y: auto; Allows the sidebar to scroll internally if its own content is too long */ 
-  background-color: #e4e7e5;
+  background-color: white;
+  
+  border-right: 1px solid #b0b0b0;
+  padding:5px;
+  padding-top:0px; 
 }
 
 .circular-dot {
@@ -49,13 +62,17 @@
  .label-pill 
   {
     min-width: fit-content; 
+    height:22px;
   font-size: 10px;
   font-weight: 500;
   padding-left: 4px;
   padding-right: 4px;
-  border-radius: 8px;
+  border-radius: 6px;
   text-transform: uppercase;
   text-align: center;
+}
+.label-green{
+  color:green;
 }
 .active {
   border-color: blue;
@@ -63,13 +80,34 @@
   transform: scale(1.05); /* Slightly enlarges the dot */  
  color: #005cf0; /* Optional: changes text color to blue when active */
 }
+.content{
+  width: 100%;
+  display: grid;
+  grid-template-areas:
+    "content-header"
+    "table-container";
+}
+.content-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #ffffff;
+  padding: 2px 20px;
+  border: 1px solid #e2e8f0;
+  height:fit-content;
+}
+
+.content-header p{
+ font-size: 18px;
+ font-weight: 500;
+}
 .table-container {
   position: top;
-  width: 76%;
+  width: 100%;
   margin-bottom: 4%;
   justify-self: right;
   overflow-y: auto; 
-  background-color: #f8f4f4;
+  background-color: white;
 }
 
 /* Responsive Mobile Layout (Breaks at 768px tablet width) */
@@ -106,10 +144,13 @@
   color: rgb(50, 21, 192);
   font-weight: bold;
 }
+.table-row  div:nth-child(4) {
+  margin-left:30px;
+}
 .col-sm {
   font-size: .75em;
   flex-wrap: wrap;
-  width:  80px;
+  width:  60px;
 }
 
 .col-m {
@@ -127,22 +168,21 @@
 
 .table-row-header {
   display: inline-flex;
-  justify-content: space-between;
-  padding:1%;
+  justify-content: space-around;
   border-bottom: 2px solid var(--border);
   align-items: left;
-  width: 96%;
-  background-color: rgba(230, 228, 228, 0.752);
+  width: 100%;
+  background-color: #dcdcdc;
 }
 .table-row-header > div {
-  flex: 1 2 1 1 2 2 2 2 ;
-  /* margin-left: 1px; */
+  margin-left: -7%;
   color: rgb(20, 4, 56);
   font-weight: bold;
   font-size: .65em;
 }
+
 .heading {
-  font-weight: 300;
+  font-weight: 600;
   margin: 8px;
   text-align: left;
 }
@@ -170,17 +210,18 @@
   /* Creates a responsive 2-column layout that scales evenly */
   grid-template-columns: repeat(2, 1fr); 
   gap: 10px;
-  max-width: 310px; /* Optional constraint to match the image ratio */
+  max-width: 380px; /* Optional constraint to match the image ratio */
   padding: 5px;
 }
 
 .metric-card {
   display: flex;
-  width: 86%;
-  max-width: 120px; /* Optional: limits the card width */
+  width: 80%;
+  max-width: 180px; /* Optional: limits the card width */
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  margin-left:10px;
   
   /* Borders and Spacing */
   padding: 14px;
@@ -205,4 +246,84 @@
   color: #64748b; /* Muted gray for text labels */
   text-transform: uppercase;
   letter-spacing: 0.5px;
+}
+
+/* .. cdd for live update in left-bar */
+.live-status-badge {
+  /* Layout & Alignment */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px; /* Spaces the icon and the text evenly */
+  
+  /* Dimensions & Padding */
+  width: 90%;
+  margin-top:10px;
+  max-width: 380px;
+  padding: 12px 20px;
+  
+  /* Borders & Background */
+  background-color: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px; /* Gives the container its rounded pill shape */
+  box-sizing: border-box;
+}
+
+/* Wi-Fi Icon Styling */
+.status-icon {
+  color: #1b8555; /* The dark green color matching the image */
+  font-size: 14px;
+
+}
+
+/* Text Styling */
+.status-text {
+  color: #1b8555;
+  font-family: 'Open Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: -0.2px;
+}
+/* bottom of left*/
+
+.status-text-bottom {
+  font-family: 'Open Sans', sans-serif;
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: -0.2px;
+}
+
+.status-bar {
+  /* Layout & Alignment */
+  background-color: #dcdcdc;
+  display: flex;
+  align-items: center;
+  gap: 8px; /* Space between icon and text */
+  
+  /* Sizing & Padding */
+  width: 84%;
+  padding: 10px 20px;
+  margin: 10px;
+  
+  /* Colors & Typography */
+  background-color: #f8f9fa; /* Light subtle grey background */
+  color: #6c757d; /* Soft dark grey text */
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 12px;
+  
+  /* Borders & Shaping */
+  border-radius: 8px; /* Smooth rounded corners */
+}
+
+/* Clock Icon Styling */
+.status-icon {
+  width: 16px;
+  height: 16px;
+  color: #6c757d; 
+}
+
+/* Bullet Point Separator Styling */
+.dot {
+  margin: 0 4px;
+  color: #adb5bd; /* Slightly lighter grey for the dot */
 }

@@ -64,7 +64,6 @@ function App() {
       }, 180000);
     };
 
-
     myWebsocket.onmessage = (event) => {
       try {
         console.log("Received raw:", event.data);
@@ -147,6 +146,10 @@ function App() {
       <Header />
       <div className="grid-container">
         <div className="sidebar">
+          <div class="live-status-badge">
+            <img src="green-wifi-15069.svg" />
+            <span className="status-text">Live Updates Active</span>
+          </div>
           <div className="heading">Filter By Status</div>
 
           <div className="dashboard-grid">
@@ -169,7 +172,9 @@ function App() {
             >
               <div className="metric-label">
                 <div className="circular-dot"></div>
-                <span>Idle ( {vehicles.filter((v) => v.status === "idle").length} )</span>
+                <span>
+                  Idle ( {vehicles.filter((v) => v.status === "idle").length} )
+                </span>
               </div>
             </div>
             <div
@@ -182,7 +187,10 @@ function App() {
             >
               <div className="metric-label">
                 <div className="circular-dot cyan"></div>
-                <span>En Route ( {vehicles.filter((v) => v.status === "en_route").length} )</span>
+                <span>
+                  En Route ({" "}
+                  {vehicles.filter((v) => v.status === "en_route").length} )
+                </span>
               </div>
             </div>
             <div
@@ -195,11 +203,43 @@ function App() {
             >
               <div className="metric-label">
                 <div className="circular-dot green"></div>
-                <span>Delivered ( {vehicles.filter((v) => v.status === "delivered").length} ) </span>
+                <span>
+                  Delivered ({" "}
+                  {vehicles.filter((v) => v.status === "delivered").length}{" "}
+                  ){" "}
+                </span>
               </div>
             </div>
           </div>
+          <br/>
+          <hr />
+          <br/>
           <FleetStatistics statistics={statistics} />
+          <div className='status-bar'>
+          <svg
+            class="status-icon"
+            xmlns="http://w3.org"
+            fill="none"
+            viewBox="0 0 36 36"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+
+          <span className="status-text-bottom">
+            Updated 3s ago <span class="dot">•</span> Next update in ~3 minutes
+          </span>
+          </div>
+        </div>
+        <div className='content'>
+        <div className='content-header'>
+          <p>Vehicle ({vehicles.length})</p>
+          <div className="label-pill label-green">Live</div>
         </div>
         <div className="table-container">
           <div className="table-row-header">
@@ -222,13 +262,11 @@ function App() {
                 <div className="col-lr">{vehicle.driverName}</div>
                 <div className={getLabelClass(vehicle.status)}>
                   {vehicle.status}
-                </div><div>
-                <div className="col-sm gray label-pill">
-                  {" "}
-                  {vehicle.speed == 0
-                    ? `${vehicle.speed}`
-                    : `${vehicle.speed} mph`}
                 </div>
+                <div>
+                  <div className="col-sm gray label-pill">
+                    {vehicle.speed} mph
+                  </div>
                 </div>
                 <div className="col-lr">{vehicle.destination}</div>
                 <div className="col-m">
@@ -246,12 +284,14 @@ function App() {
               </div>
             ))}
         </div>
+        </div>
         {isModalOpen && (
           <VehicleStatusModal
             props={selectedVehicle}
             onClose={() => setIsModalOpen(false)}
           />
         )}
+        
       </div>
     </>
   );
